@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Briefcase, User, Bell, MessageSquare, Star, Award, TrendingUp, Calendar, CheckCircle } from 'lucide-react';
-import { getSkills, getProjects, getStudents } from '../api'; // Adjust path if needed
+import { getSkills, getProjects, getStudents } from '../api'; 
 
 const SkillHub = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState('discover');
@@ -27,7 +27,16 @@ const SkillHub = ({ onNavigate }) => {
       
       // Get students
       const { data: studentsData } = await getStudents();
-      if (studentsData) setTopStudents(studentsData);
+      if (studentsData) {
+        // Process student skills to convert from string to object if needed
+        const processedStudents = studentsData.map(student => ({
+          ...student,
+          parsedSkills: student.skills ? 
+            (typeof student.skills === 'string' ? JSON.parse(student.skills) : student.skills) : 
+            []
+        }));
+        setTopStudents(processedStudents);
+      }
       
       setLoading(false);
     }
@@ -191,7 +200,7 @@ const SkillHub = ({ onNavigate }) => {
                   <p className="text-sm font-bold text-gray-700">{project.budget}</p>
                 </div>
                 <div className="px-4 py-3 bg-gray-50 flex flex-wrap gap-2">
-                  {project.skills.map((skill, idx) => (
+                  {Array.isArray(project.skills) && project.skills.map((skill, idx) => (
                     <span key={idx} className="text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded-md">{skill}</span>
                   ))}
                 </div>
@@ -221,14 +230,16 @@ const SkillHub = ({ onNavigate }) => {
                   <div className="flex items-center mb-2">
                     <Star size={14} className="text-yellow-500 mr-1" />
                     <span className="text-sm font-medium">{student.rating}</span>
-                    <span className="text-xs text-gray-500 ml-2">{student.projects} projects</span>
+                    <span className="text-xs text-gray-500 ml-2">{student.projects_completed} projects</span>
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {student.skills.slice(0, 2).map((skill, idx) => (
-                      <span key={idx} className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{skill}</span>
-                    ))}
-                    {student.skills.length > 2 && (
-                      <span className="text-xs text-gray-500">+{student.skills.length - 2} more</span>
+                    {student.parsedSkills && Array.isArray(student.parsedSkills) && 
+                      student.parsedSkills.slice(0, 2).map((skill, idx) => (
+                        <span key={idx} className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{skill.name}</span>
+                      ))
+                    }
+                    {student.parsedSkills && Array.isArray(student.parsedSkills) && student.parsedSkills.length > 2 && (
+                      <span className="text-xs text-gray-500">+{student.parsedSkills.length - 2} more</span>
                     )}
                   </div>
                 </div>
