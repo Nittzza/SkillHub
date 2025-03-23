@@ -76,7 +76,7 @@ const SkillHub = ({ onNavigate }) => {
     },
     {
       id: 3,
-      name: 'Anand',
+      name: 'Athish',
       program: 'B.Tech Computer Science',
       parsedSkills: [
         { name: 'Blockchain', category: 'Web3', level: 4 },
