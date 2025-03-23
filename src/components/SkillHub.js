@@ -11,34 +11,130 @@ const SkillHub = ({ onNavigate }) => {
   const [topProjects, setTopProjects] = useState([]);
   const [topStudents, setTopStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Sample fallback data in case API calls fail
+  const fallbackSkills = [
+    { id: 1, name: 'Web Development', count: 126 },
+    { id: 2, name: 'UI/UX Design', count: 98 },
+    { id: 3, name: 'Data Analysis', count: 87 },
+    { id: 4, name: 'Content Writing', count: 65 },
+    { id: 5, name: 'Video Editing', count: 54 }
+  ];
+
+  const fallbackProjects = [
+    {
+      id: 1,
+      title: 'Frontend Developer for E-commerce App',
+      budget: '₹8,000 - ₹15,000',
+      duration: '2 weeks',
+      skills: ['React', 'Tailwind CSS', 'API Integration'],
+      employer: 'TechStart Solutions',
+      deadline: '3 days'
+    },
+    {
+      id: 2,
+      title: 'Data Visualization for Research Project',
+      budget: '₹5,000 - ₹10,000',
+      duration: '1 week',
+      skills: ['Python', 'Matplotlib', 'Data Analysis'],
+      employer: 'Prof. Sharma, Economics Dept',
+      deadline: '5 days'
+    },
+    {
+      id: 3,
+      title: 'Mobile App UI Design',
+      budget: '₹6,000 - ₹12,000',
+      duration: '10 days',
+      skills: ['Figma', 'UI/UX', 'Mobile Design'],
+      employer: 'Campus Eats Startup',
+      deadline: '2 days'
+    }
+  ];
+
+  const fallbackStudents = [
+    {
+      id: 1,
+      name: 'Nittya',
+      program: 'B.Tech Computer Science',
+      parsedSkills: [
+        { name: 'React.js', category: 'Frontend Development', level: 4 },
+        { name: 'UI/UX Design', category: 'Design', level: 4 }
+      ],
+      rating: 4.9,
+      projects_completed: 15
+    },
+    {
+      id: 2,
+      name: 'Mukund',
+      program: 'M.Tech Data Science',
+      parsedSkills: [
+        { name: 'Python', category: 'Programming Languages', level: 4 },
+        { name: 'Machine Learning', category: 'AI & ML', level: 4 }
+      ],
+      rating: 4.8,
+      projects_completed: 12
+    },
+    {
+      id: 3,
+      name: 'Anand',
+      program: 'B.Tech Computer Science',
+      parsedSkills: [
+        { name: 'Blockchain', category: 'Web3', level: 4 },
+        { name: 'Solidity', category: 'Web3', level: 4 }
+      ],
+      rating: 4.7,
+      projects_completed: 11
+    }
+  ];
   
   // Add this useEffect to fetch data when component mounts
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
       
-      // Get skills
-      const { data: skillsData } = await getSkills();
-      if (skillsData) setFeaturedSkills(skillsData);
-      
-      // Get projects
-      const { data: projectsData } = await getProjects();
-      if (projectsData) setTopProjects(projectsData);
-      
-      // Get students
-      const { data: studentsData } = await getStudents();
-      if (studentsData) {
-        // Process student skills to convert from string to object if needed
-        const processedStudents = studentsData.map(student => ({
-          ...student,
-          parsedSkills: student.skills ? 
-            (typeof student.skills === 'string' ? JSON.parse(student.skills) : student.skills) : 
-            []
-        }));
-        setTopStudents(processedStudents);
+      try {
+        // Get skills
+        const { data: skillsData, error: skillsError } = await getSkills();
+        if (skillsError) throw skillsError;
+        if (skillsData && skillsData.length > 0) {
+          setFeaturedSkills(skillsData);
+        } else {
+          setFeaturedSkills(fallbackSkills);
+        }
+        
+        // Get projects
+        const { data: projectsData, error: projectsError } = await getProjects();
+        if (projectsError) throw projectsError;
+        if (projectsData && projectsData.length > 0) {
+          setTopProjects(projectsData);
+        } else {
+          setTopProjects(fallbackProjects);
+        }
+        
+        // Get students
+        const { data: studentsData, error: studentsError } = await getStudents();
+        if (studentsError) throw studentsError;
+        if (studentsData && studentsData.length > 0) {
+          // Process student skills to convert from string to object if needed
+          const processedStudents = studentsData.map(student => ({
+            ...student,
+            parsedSkills: student.skills ? 
+              (typeof student.skills === 'string' ? JSON.parse(student.skills) : student.skills) : 
+              []
+          }));
+          setTopStudents(processedStudents);
+        } else {
+          setTopStudents(fallbackStudents);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        // Use fallback data if API calls fail
+        setFeaturedSkills(fallbackSkills);
+        setTopProjects(fallbackProjects);
+        setTopStudents(fallbackStudents);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     }
     
     fetchData();
@@ -161,7 +257,7 @@ const SkillHub = ({ onNavigate }) => {
             </div>
           </div>
           <div className="hidden md:block">
-            <img src="/api/placeholder/300/200" alt="Students collaborating" className="rounded-md" />
+            <img src="https://placehold.co/300x200" alt="Students collaborating" className="rounded-md" />
           </div>
         </div>
         
@@ -173,7 +269,7 @@ const SkillHub = ({ onNavigate }) => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {featuredSkills.map(skill => (
-              <div key={skill.id} className="bg-white rounded-lg shadow-sm p-4 border border-gray-100 hover:shadow-md transition cursor-pointer">
+              <div key={skill.id || `skill-${Math.random()}`} className="bg-white rounded-lg shadow-sm p-4 border border-gray-100 hover:shadow-md transition cursor-pointer">
                 <h4 className="font-medium text-gray-800">{skill.name}</h4>
                 <p className="text-sm text-gray-500">{skill.count} students</p>
               </div>
@@ -189,7 +285,7 @@ const SkillHub = ({ onNavigate }) => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {topProjects.map(project => (
-              <div key={project.id} className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition cursor-pointer">
+              <div key={project.id || `project-${Math.random()}`} className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition cursor-pointer">
                 <div className="p-4 border-b border-gray-100">
                   <div className="flex justify-between">
                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-md">{project.deadline} left</span>
@@ -217,7 +313,7 @@ const SkillHub = ({ onNavigate }) => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {topStudents.map(student => (
-              <div key={student.id} className="bg-white rounded-lg shadow-sm p-4 border border-gray-100 hover:shadow-md transition cursor-pointer flex">
+              <div key={student.id || `student-${Math.random()}`} className="bg-white rounded-lg shadow-sm p-4 border border-gray-100 hover:shadow-md transition cursor-pointer flex">
                 <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-4">
                   {student.name.charAt(0)}
                 </div>
@@ -230,7 +326,7 @@ const SkillHub = ({ onNavigate }) => {
                   <div className="flex items-center mb-2">
                     <Star size={14} className="text-yellow-500 mr-1" />
                     <span className="text-sm font-medium">{student.rating}</span>
-                    <span className="text-xs text-gray-500 ml-2">{student.projects_completed} projects</span>
+                    <span className="text-xs text-gray-500 ml-2">{student.projects_completed || '0'} projects</span>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {student.parsedSkills && Array.isArray(student.parsedSkills) && 
